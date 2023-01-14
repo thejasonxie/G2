@@ -565,6 +565,8 @@ async function plotView(
           ),
       (update) =>
         update.each(function (options) {
+          const { preserve = false } = options;
+          if (preserve) return;
           const newComponent = renderComponent(
             options,
             coordinate,
