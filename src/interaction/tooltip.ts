@@ -144,7 +144,13 @@ function showTooltip({
   parent.tooltipElement = tooltipElement;
 }
 
-function hideTooltip({ root, single, emitter, nativeEvent = true }) {
+function hideTooltip({
+  root,
+  single,
+  emitter,
+  nativeEvent = true,
+  event = null,
+}) {
   if (nativeEvent) {
     emitter.emit('tooltip:hide', { nativeEvent });
   }
@@ -152,7 +158,8 @@ function hideTooltip({ root, single, emitter, nativeEvent = true }) {
   const parent = single ? canvasContainer : root;
   const { tooltipElement } = parent;
   if (tooltipElement) {
-    tooltipElement.hide();
+    // Must be clientX, clientY.
+    tooltipElement.hide(event?.clientX, event?.clientY);
   }
 }
 
@@ -429,7 +436,7 @@ export function seriesTooltip(
     groupName,
     emitter,
     wait = 50,
-    leading = true,
+    leading = false,
     trailing = false,
     startX = 0,
     startY = 0,
@@ -619,7 +626,7 @@ export function seriesTooltip(
 
       // Hide tooltip with no selected tooltip.
       if (selectedElements.length === 0 || isEmptyTooltipData(tooltipData)) {
-        hide();
+        hide(event);
         return;
       }
 
@@ -677,8 +684,9 @@ export function seriesTooltip(
     { leading, trailing },
   ) as (...args: any[]) => void;
 
-  const hide = () => {
-    hideTooltip({ root, single, emitter });
+  const hide = (event: MouseEvent) => {
+    console.log(111, 'hide');
+    hideTooltip({ root, single, emitter, event });
     if (crosshairs) hideRuleY(root);
     if (marker) hideMarker(root);
   };
@@ -791,7 +799,7 @@ export function tooltip(
     (event) => {
       const { target: element } = event;
       if (!elementSet.has(element)) {
-        hideTooltip({ root, single, emitter });
+        hideTooltip({ root, single, emitter, event });
         return;
       }
       const k = groupKey(element);
@@ -810,7 +818,7 @@ export function tooltip(
       }
 
       if (isEmptyTooltipData(data)) {
-        hideTooltip({ root, single, emitter });
+        hideTooltip({ root, single, emitter, event });
         return;
       }
 
@@ -844,17 +852,18 @@ export function tooltip(
     { leading, trailing },
   ) as (...args: any[]) => void;
 
-  const pointerout = (event) => {
-    const { target: element } = event;
-    if (!elementSet.has(element)) return;
-    hideTooltip({ root, single, emitter });
+  const pointerleave = (event) => {
+    // const { target: element } = event;
+    console.log(1112, 'leave');
+    // if (!elementSet.has(element)) return;
+    hideTooltip({ root, single, emitter, event });
   };
 
   const addEventListeners = () => {
     if (!disableNative) {
       root.addEventListener('pointerover', pointerover);
       root.addEventListener('pointermove', pointerover);
-      root.addEventListener('pointerout', pointerout);
+      root.addEventListener('pointerleave', pointerleave);
     }
   };
 
@@ -862,7 +871,7 @@ export function tooltip(
     if (!disableNative) {
       root.removeEventListener('pointerover', pointerover);
       root.removeEventListener('pointermove', pointerover);
-      root.removeEventListener('pointerout', pointerout);
+      root.removeEventListener('pointerleave', pointerleave);
     }
   };
 
